@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles or overrides if needed */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background-color: #f0f0f0; /* Light gray background */
+            margin: 0;
+            padding-top: 60px; /* Add padding to account for fixed header */
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: #ffffff; /* White header background */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            z-index: 10; /* Ensure header is on top */
+            display: flex; /* Use flexbox for header layout */
+            align-items: center; /* Vertically align items */
+            padding: 0 16px; /* Add some horizontal padding */
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .header-center {
+            flex-grow: 1; /* Allow the center section (search bar) to take available space */
+            margin: 0 16px; /* Add horizontal margin around the search bar */
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px; /* Add space between right-side icons */
+        }
+
+        /* Search Bar Styling */
+        .search-bar {
+            width: 100%; /* Make search bar take full width of its container */
+            padding: 8px 12px;
+            border: 1px solid #d1d5db; /* Light gray border */
+            border-radius: 8px; /* Rounded corners */
+            font-size: 0.9em;
+            outline: none; /* Remove default outline */
+            transition: border-color 0.2s ease-in-out;
+        }
+        .search-bar:focus {
+            border-color: #007aff; /* iOS blue border on focus */
+        }
+
+
+        .menu-section {
+            display: none; /* Hide all menu sections by default */
+        }
+        .menu-item {
+            background-color: #ffffff;
+            margin-bottom: 12px;
+            padding: 16px;
+            border-radius: 12px; /* Rounded corners */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle item shadow */
+            display: flex; /* Use flexbox for layout */
+            justify-content: space-between; /* Space out content */
+            align-items: center; /* Vertically align items */
+        }
+
+        /* Styling for the image within menu item */
+        .menu-item img {
+            width: 80px; /* Set a fixed width for the image */
+            height: 80px; /* Set a fixed height for the image */
+            object-fit: cover; /* Ensure the image covers the area without distortion */
+            border-radius: 8px; /* Rounded corners for the image */
+            margin-right: 16px; /* Space between image and text details */
+        }
+
+        .menu-item-details {
+            flex-grow: 1; /* Allow details to take up space */
+            margin-right: 16px; /* Add space between details and button/controls */
+        }
+        .menu-item-price {
+            font-weight: 600; /* Semi-bold price */
+            color: #1f2937; /* Dark gray color */
+            margin-top: 4px; /* Space above price */
+        }
+        .add-to-cart-button {
+            background-color: #007aff; /* iOS blue */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px; /* Rounded button */
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out; /* Smooth transition */
+        }
+        .add-to-cart-button:hover {
+            background-color: #005bb5; /* Darker blue on hover */
+        }
+
+        /* Quantity Controls within Menu Item */
+        .menu-item-quantity-controls {
+            display: flex;
+            align-items: center;
+            /* Initially hidden, will be shown by JS */
+            display: none;
+        }
+
+        .quantity-button {
+            background-color: #e5e7eb; /* Light gray */
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 4px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .quantity-button:hover {
+            background-color: #d1d5db; /* Darker gray on hover */
+        }
+
+        .item-quantity {
+            font-weight: 600;
+            min-width: 20px; /* Give some space for the number */
+            text-align: center;
+        }
+
+
+        .healthy-menu-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            background-color: #e5e7eb; /* Light gray background for toggle */
+            font-size: 0.9em;
+            transition: background-color 0.2s ease-in-out; /* Smooth transition */
+        }
+         .healthy-menu-toggle:hover {
+            background-color: #d1d1db; /* Darker gray on hover */
+        }
+        /* Style for the selected state */
+        .healthy-menu-toggle.selected {
+            background-color: #d1d5db; /* Grey background when selected */
+            font-weight: 600; /* Slightly bolder text */
+        }
+
+        .cart-icon-container {
+            position: relative; /* Needed for badge positioning */
+            cursor: pointer;
+        }
+        .cart-count-badge {
+            position: absolute;
+            top: -8px; /* Adjust position as needed */
+            right: -8px; /* Adjust position as needed */
+            background-color: #ff3b30; /* iOS red */
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            font-weight: 600;
+            min-width: 20px; /* Ensure it's a circle */
+            text-align: center;
+        }
+
+        /* Modal Overlay Styles (for Cart, Login/Signup, and Payment) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 20; /* Above the header */
+        }
+
+        /* Modal Content Styles (for Cart, Login/Signup, and Payment) */
+        .modal-content {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px; /* Max width for the modal */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative; /* For close button positioning */
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #6b7280; /* Gray color */
+        }
+
+        /* Specific Cart Modal Styles */
+        .cart-items-list {
+            margin-top: 16px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Vertically align items */
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border */
+            font-size: 0.9em;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none; /* No border for the last item */
+        }
+
+        .cart-item-info {
+             /* Adjust flex-grow as needed */
+             flex-grow: 1;
+             margin-right: 16px;
+        }
+
+        .cart-total {
+            margin-top: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .proceed-to-checkout-button {
+            display: block; /* Make the button a block element */
+            width: 100%; /* Make the button take full width */
+            margin-top: 20px; /* Add space above the button */
+            padding: 10px;
+            background-color: #28a745; /* Green color for checkout */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center; /* Center the text */
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .proceed-to-checkout-button:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+
+
+        /* Specific Login/Signup Modal Styles */
+        .auth-form-container {
+            margin-top: 16px;
+        }
+
+        .auth-form-container h3 {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .auth-form-container input[type="text"],
+        .auth-form-container input[type="email"],
+        .auth-form-container input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+
+        .auth-form-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .auth-form-container button:hover {
+             background-color: #005bb5;
+        }
+
+        .auth-form-container .switch-form-link {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.9em;
+            color: #007aff;
+            cursor: pointer;
+        }
+
+        /* Specific Payment Modal Styles */
+        .payment-options {
+            margin-top: 20px;
+        }
+
+        .payment-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .payment-option input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        .payment-option label {
+            font-size: 1em;
+            color: #374151; /* Darker gray */
+        }
+
+        .coupon-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .coupon-section input[type="text"] {
+            width: calc(100% - 80px); /* Adjust width to make space for button */
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 8px; /* Space between input and button */
+        }
+
+        .coupon-section button {
+            padding: 8px 12px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .coupon-section button:hover {
+            background-color: #005bb5;
+        }
+
+        .coupon-message {
+            margin-top: 8px;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        .coupon-message.success {
+            color: #28a745; /* Green for success */
+        }
+
+        .coupon-message.error {
+            color: #dc3545; /* Red for error */
+        }
+
+
+        .payment-summary {
+             margin-top: 20px;
+             padding-top: 15px;
+             border-top: 1px solid #e5e7eb;
+             font-size: 1.1em;
+             font-weight: 600;
+             text-align: right;
+             color: #1f2937;
+         }
+
+        .payment-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px; /* Space between buttons */
+            margin-top: 20px;
+        }
+
+        .payment-buttons button {
+            flex-grow: 1; /* Allow buttons to grow and fill space */
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .pay-now-button {
+            background-color: #007aff; /* iOS blue */
+            color: white;
+        }
+
+        .pay-now-button:hover {
+            background-color: #005bb5; /* Darker blue */
+        }
+
+        .previous-button {
+            background-color: #6c757d; /* Gray color for previous */
+            color: white;
+        }
+
+        .previous-button:hover {
+             background-color: #5a6268; /* Darker gray */
+        }
+
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="antialiased">
+
+    <header class="header">
+        <div class="header-left">
+            <span class="text-xl font-bold text-gray-800 mr-2">🍔</span>
+            <span class="text-xl font-bold text-gray-800">FoodApp</span>
+        </div>
+
+        <div class="header-center">
+             <input type="text" id="search-bar" class="search-bar" placeholder="Search food or healthy options...">
+        </div>
+
+        <div class="header-right">
+            <span id="healthy-menu-toggle" class="healthy-menu-toggle text-gray-700">Healthy Food</span>
+             <div class="cart-icon-container" id="cart-icon">
+                <span class="text-gray-600 text-2xl">🛒</span>
+                <span id="cart-count" class="cart-count-badge hidden">0</span>
+            </div>
+            <span class="text-gray-700 cursor-pointer text-sm" id="login-signup-link">Login/Signup</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+
+        <section id="breakfast-menu" class="menu-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Breakfast Menu</h2>
+            <div class="menu-list">
+                <div class="menu-item">
+                    <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Plain+Dosa" alt="Plain Dosa Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Plain Dosa</h3>
+                        <p class="text-gray-600 text-sm">Thin rice crepe.</p>
+                        <p class="menu-item-price">₹60.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Masala+Dosa" alt="Masala Dosa Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Masala Dosa</h3>
+                        <p class="text-gray-600 text-sm">Rice crepe filled with spiced potato filling.</p>
+                        <p class="menu-item-price">₹80.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Idly" alt="Idly Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Idly</h3>
+                        <p class="text-gray-600 text-sm">Steamed rice cakes.</p>
+                        <p class="menu-item-price">₹50.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Poori" alt="Poori Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Poori</h3>
+                        <p class="text-gray-600 text-sm">Deep-fried puffed bread.</p>
+                        <p class="menu-item-price">₹70.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Vada" alt="Vada Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Vada</h3>
+                        <p class="text-gray-600 text-sm">Savory fried lentil fritters.</p>
+                        <p class="menu-item-price">₹40.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Rava+Dosa" alt="Rava Dosa Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Rava Dosa</h3>
+                        <p class="text-gray-600 text-sm">Crispy crepe made from semolina.</p>
+                        <p class="menu-item-price">₹75.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Upma" alt="Upma Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Upma</h3>
+                        <p class="text-gray-600 text-sm">Savory porridge made from semolina.</p>
+                        <p class="menu-item-price">₹65.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Pongal" alt="Pongal Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Pongal</h3>
+                        <p class="text-gray-600 text-sm">South Indian rice and lentil dish.</p>
+                        <p class="menu-item-price">₹90.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Pulao" alt="Pulao Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Pulao</h3>
+                        <p class="text-gray-600 text-sm">Flavored rice dish with vegetables or meat.</p>
+                        <p class="menu-item-price">₹150.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Masala+Vada" alt="Masala Vada Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Masala Vada</h3>
+                        <p class="text-gray-600 text-sm">Spicy lentil fritters.</p>
+                        <p class="menu-item-price">₹55.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                </div>
+        </section>
+
+        <section id="lunch-menu" class="menu-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Lunch Menu</h2>
+            <div class="menu-list">
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Andhra+Meal" alt="Andhra Meal Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Andhra Meal</h3>
+                        <p class="text-gray-600 text-sm">Traditional Andhra style thali with rice, curries, sambar, rasam, and more.</p>
+                        <p class="menu-item-price">₹350.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chapathi+Veg+Curry" alt="Chapathi with Veg Curry Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chapathi with Veg Curry</h3>
+                        <p class="text-gray-600 text-sm">Soft chapathis served with a flavorful mixed vegetable curry.</p>
+                        <p class="menu-item-price">₹180.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Curd+Rice" alt="Curd Rice Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Curd Rice</h3>
+                        <p class="text-gray-600 text-sm">Comforting and cooling rice mixed with yogurt and tempered spices.</p>
+                        <p class="menu-item-price">₹120.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chicken+Biryani" alt="Chicken Biryani Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chicken Biryani</h3>
+                        <p class="text-gray-600 text-sm">Fragrant basmati rice cooked with tender chicken pieces and aromatic spices.</p>
+                        <p class="menu-item-price">₹420.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Butter+Naan" alt="Butter Naan Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Butter Naan</h3>
+                        <p class="text-gray-600 text-sm">Soft, leavened flatbread brushed with butter.</p>
+                        <p class="menu-item-price">₹80.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Butter+Chicken+with+Paneer" alt="Butter Chicken with Paneer Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Butter Chicken with Paneer</h3>
+                        <p class="text-gray-600 text-sm">Creamy and rich chicken curry with paneer in a tomato-based gravy.</p>
+                        <p class="menu-item-price">₹400.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Veg+Fried+Rice" alt="Veg Fried Rice Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Veg Fried Rice</h3>
+                        <p class="text-gray-600 text-sm">Wok-tossed rice with mixed vegetables and savory sauces.</p>
+                        <p class="menu-item-price">₹220.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                </div>
+        </section>
+
+        <section id="snack-menu" class="menu-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Snack Break</h2>
+            <div class="menu-list">
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Fruit+Smoothie" alt="Fruit Smoothie Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Fruit Smoothie</h3>
+                        <p class="text-gray-600 text-sm">Refreshing fruit blend.</p>
+                        <p class="menu-item-price">₹150.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Yogurt+Parfait" alt="Yogurt Parfait Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Yogurt Parfait</h3>
+                        <p class="text-gray-600 text-sm">Yogurt with granola and fruit.</p>
+                        <p class="menu-item-price">₹130.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                </div>
+        </section>
+
+        <section id="dinner-menu" class="menu-section">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Dinner Menu</h2>
+            <div class="menu-list">
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chicken+Biryani" alt="Chicken Biryani Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chicken Biryani</h3>
+                        <p class="text-gray-600 text-sm">Fragrant basmati rice cooked with tender chicken pieces and aromatic spices.</p>
+                        <p class="menu-item-price">₹420.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Mutton+Biryani" alt="Mutton Biryani Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Mutton Biryani</h3>
+                        <p class="text-gray-600 text-sm">Rich and flavorful basmati rice with succulent mutton pieces.</p>
+                        <p class="menu-item-price">₹550.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chicken+Curry" alt="Chicken Curry Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chicken Curry</h3>
+                        <p class="text-gray-600 text-sm">Classic Indian chicken curry with a rich, spiced gravy.</p>
+                        <p class="menu-item-price">₹380.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Butter+Naan" alt="Butter Naan Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Butter Naan</h3>
+                        <p class="text-gray-600 text-sm">Soft, leavened flatbread brushed with butter.</p>
+                        <p class="menu-item-price">₹80.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Pulka" alt="Pulka Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Pulka</h3>
+                        <p class="text-gray-600 text-sm">Light and fluffy whole wheat Indian bread.</p>
+                        <p class="menu-item-price">₹40.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                      <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Butter+Chicken+with+Paneer" alt="Butter Chicken with Paneer Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Butter Chicken with Paneer</h3>
+                        <p class="text-gray-600 text-sm">Creamy and rich chicken curry with paneer in a tomato-based gravy.</p>
+                        <p class="menu-item-price">₹400.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Veg+Fried+Rice" alt="Veg Fried Rice Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Veg Fried Rice</h3>
+                        <p class="text-gray-600 text-sm">Wok-tossed rice with mixed vegetables and savory sauces.</p>
+                        <p class="menu-item-price">₹220.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Grilled+Salmon" alt="Grilled Salmon Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Grilled Salmon</h3>
+                        <p class="text-gray-600 text-sm">Grilled salmon with roasted vegetables.</p>
+                        <p class="menu-item-price">₹600.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Pasta+Primavera" alt="Pasta Primavera Image">
+                     <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Pasta Primavera</h3>
+                        <p class="text-gray-600 text-sm">Pasta with fresh seasonal vegetables.</p>
+                        <p class="menu-item-price">₹450.00</p>
+                    </div>
+                     <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Meals" alt="Meals Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Meals</h3>
+                        <p class="text-gray-600 text-sm">A complete meal with rice, curries, and sides.</p>
+                        <p class="menu-item-price">₹200.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chicken+Fried+Rice" alt="Chicken Fried Rice Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chicken Fried Rice</h3>
+                        <p class="text-gray-600 text-sm">Stir-fried rice with chicken and vegetables.</p>
+                        <p class="menu-item-price">₹280.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Egg+Noodles" alt="Egg Noodles Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Egg Noodles</h3>
+                        <p class="text-gray-600 text-sm">Stir-fried noodles with egg and vegetables.</p>
+                        <p class="menu-item-price">₹250.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Chicken+Noodles" alt="Chicken Noodles Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Chicken Noodles</h3>
+                        <p class="text-gray-600 text-sm">Stir-fried noodles with chicken and vegetables.</p>
+                        <p class="menu-item-price">₹270.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Pulao" alt="Pulao Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Pulao</h3>
+                        <p class="text-gray-600 text-sm">Flavored rice dish with vegetables or meat.</p>
+                        <p class="menu-item-price">₹150.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                 <div class="menu-item">
+                     <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Omlet" alt="Omlet Image">
+                    <div class="menu-item-details">
+                        <h3 class="text-lg font-medium text-gray-700">Omlet</h3>
+                        <p class="text-gray-600 text-sm">Fluffy omelette.</p>
+                        <p class="menu-item-price">₹80.00</p>
+                    </div>
+                    <div class="menu-item-action">
+                         <button class="add-to-cart-button">Add to Cart</button>
+                         <div class="menu-item-quantity-controls">
+                             <button class="quantity-button decrease-quantity">-</button>
+                             <span class="item-quantity">1</span>
+                             <button class="quantity-button increase-quantity">+</button>
+                         </div>
+                    </div>
+                </div>
+                </div>
+        </section>
+
+        <section id="healthy-food-menu" class="menu-section">
+             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Healthy Food Menu</h2>
+
+             <div class="mb-6">
+                 <h3 class="text-xl font-medium text-gray-800 mb-3">For Sick Patients</h3>
+                 <div class="menu-list">
+                      <div class="menu-item">
+                           <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Bone+Soup" alt="Bone Soup Image">
+                          <div class="menu-item-details">
+                            <h4 class="text-lg font-medium text-gray-700">Bone Soup</h4>
+                            <p class="text-gray-600 text-sm">Nutritious and easy to digest bone broth.</p>
+                             <p class="menu-item-price">₹150.00</p>
+                         </div>
+                          <div class="menu-item-action">
+                             <button class="add-to-cart-button">Add to Cart</button>
+                             <div class="menu-item-quantity-controls">
+                                 <button class="quantity-button decrease-quantity">-</button>
+                                 <span class="item-quantity">1</span>
+                                 <button class="quantity-button increase-quantity">+</button>
+                             </div>
+                        </div>
+                     </div>
+                      <div class="menu-item">
+                           <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Ginger+Tea" alt="Ginger Tea Image">
+                           <div class="menu-item-details">
+                            <h4 class="text-lg font-medium text-gray-700">Ginger Tea</h4>
+                            <p class="text-gray-600 text-sm">Soothing tea with fresh ginger.</p>
+                             <p class="menu-item-price">₹60.00</p>
+                         </div>
+                          <div class="menu-item-action">
+                             <button class="add-to-cart-button">Add to Cart</button>
+                             <div class="menu-item-quantity-controls">
+                                 <button class="quantity-button decrease-quantity">-</button>
+                                 <span class="item-quantity">1</span>
+                                 <button class="quantity-button increase-quantity">+</button>
+                             </div>
+                        </div>
+                     </div>
+                     <div class="menu-item">
+                         <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Idly" alt="Idly Image">
+                        <div class="menu-item-details">
+                           <h4 class="text-lg font-medium text-gray-700">Idly</h4>
+                           <p class="text-gray-600 text-sm">Steamed rice cakes, light and easy to digest.</p>
+                           <p class="menu-item-price">₹80.00</p>
+                        </div>
+                         <div class="menu-item-action">
+                            <button class="add-to-cart-button">Add to Cart</button>
+                            <div class="menu-item-quantity-controls">
+                                <button class="quantity-button decrease-quantity">-</button>
+                                <span class="item-quantity">1</span>
+                                <button class="quantity-button increase-quantity">+</button>
+                            </div>
+                         </div>
+                     </div>
+                     </div>
+             </div>
+
+             <div>
+                 <h3 class="text-xl font-medium text-gray-800 mb-3">For Healthy Lifestyle</h3>
+                  <div class="menu-list">
+                      <div class="menu-item">
+                           <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Sprouts" alt="Sprouts Image">
+                          <div class="menu-item-details">
+                            <h4 class="text-lg font-medium text-gray-700">Sprouts</h4>
+                            <p class="text-gray-600 text-sm">Fresh and nutritious mixed sprouts salad.</p>
+                             <p class="menu-item-price">₹100.00</p>
+                         </div>
+                          <div class="menu-item-action">
+                             <button class="add-to-cart-button">Add to Cart</button>
+                             <div class="menu-item-quantity-controls">
+                                 <button class="quantity-button decrease-quantity">-</button>
+                                 <span class="item-quantity">1</span>
+                                 <button class="quantity-button increase-quantity">+</button>
+                             </div>
+                        </div>
+                     </div>
+                      <div class="menu-item">
+                           <img src="https://placehold.co/100x100/E5E7EB/1F2937?text=Boiled+Chicken" alt="Boiled Chicken Image">
+                           <div class="menu-item-details">
+                            <h4 class="text-lg font-medium text-gray-700">Boiled Chicken with Broccoli and Leafs</h4>
+                            <p class="text-gray-600 text-sm">Lean boiled chicken served with steamed broccoli and greens.</p>
+                             <p class="menu-item-price">₹380.00</p>
+                         </div>
+                          <div class="menu-item-action">
+                             <button class="add-to-cart-button">Add to Cart</button>
+                             <div class="quantity-button decrease-quantity">-</button>
+                                 <span class="item-quantity">1</span>
+                                 <button class="quantity-button increase-quantity">+</button>
+                             </div>
+                        </div>
+                     </div>
+                     </div>
+             </div>
+        </section>
+
+    </main>
+
+    <div id="cart-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="cart-modal-close">&times;</span>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Your Cart</h2>
+            <div id="cart-items-list" class="cart-items-list">
+                </div>
+            <div id="cart-total" class="cart-total">
+                </div>
+            <button class="proceed-to-checkout-button" id="proceed-to-checkout">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <div id="auth-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="auth-modal-close">&times;</span>
+            <div id="login-form" class="auth-form-container">
+                <h3>Login</h3>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Password" required>
+                <button>Login</button>
+                <span class="switch-form-link" id="show-signup">Don't have an account? Sign Up</span>
+            </div>
+            <div id="signup-form" class="auth-form-container" style="display: none;">
+                 <h3>Sign Up</h3>
+                 <input type="text" placeholder="Name" required>
+                 <input type="email" placeholder="Email" required>
+                 <input type="password" placeholder="Password" required>
+                 <button>Sign Up</button>
+                 <span class="switch-form-link" id="show-login">Already have an account? Login</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="payment-modal-close">&times;</span>
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Payment</h2>
+
+            <div class="payment-options">
+                <div class="payment-option">
+                    <input type="radio" id="cash-on-delivery" name="payment-method" value="cod" checked>
+                    <label for="cash-on-delivery">Cash on Delivery</label>
+                </div>
+                <div class="payment-option">
+                    <input type="radio" id="credit-card" name="payment-method" value="credit-card">
+                    <label for="credit-card">Credit Card (Not implemented)</label>
+                </div>
+                 <div class="payment-option">
+                    <input type="radio" id="upi" name="payment-method" value="upi">
+                    <label for="upi">UPI (Not implemented)</label>
+                </div>
+            </div>
+
+            <div class="coupon-section">
+                <label for="coupon-code" class="block text-sm font-medium text-gray-700 mb-2">Have a coupon code?</label>
+                <div class="flex items-center">
+                    <input type="text" id="coupon-code" placeholder="Enter coupon code" class="flex-grow">
+                    <button id="apply-coupon-button">Apply</button>
+                </div>
+                <p id="coupon-message" class="coupon-message"></p>
+            </div>
+
+
+             <div id="payment-summary" class="payment-summary">
+                 </div>
+
+            <div class="payment-buttons">
+                 <button class="previous-button" id="previous-button">Previous</button>
+                 <button class="pay-now-button" id="pay-now-button">Pay Now</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // JavaScript to handle the dynamic menu display based on time, Add to Cart, and Search
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainContent = document.querySelector('main'); // Use event delegation on main content
+            const healthyMenuToggle = document.getElementById('healthy-menu-toggle');
+            const cartCountBadge = document.getElementById('cart-count');
+            const cartIcon = document.getElementById('cart-icon');
+            const cartModalOverlay = document.getElementById('cart-modal-overlay');
+            const cartModalClose = document.getElementById('cart-modal-close');
+            const cartItemsList = document.getElementById('cart-items-list');
+            const cartTotalElement = document.getElementById('cart-total');
+            const searchBar = document.getElementById('search-bar'); // Get the search bar element
+            const healthyFoodMenu = document.getElementById('healthy-food-menu'); // Get the healthy food menu element
+            const proceedToCheckoutButton = document.getElementById('proceed-to-checkout'); // Get the checkout button
+
+            // Get elements for Login/Signup modal
+            const loginSignupLink = document.getElementById('login-signup-link');
+            const authModalOverlay = document.getElementById('auth-modal-overlay');
+            const authModalClose = document.getElementById('auth-modal-close');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const showSignupLink = document.getElementById('show-signup');
+            const showLoginLink = document.getElementById('show-login');
+
+            // Get elements for Payment modal
+            const paymentModalOverlay = document.getElementById('payment-modal-overlay');
+            const paymentModalClose = document.getElementById('payment-modal-close');
+            const paymentSummaryElement = document.getElementById('payment-summary');
+            const couponCodeInput = document.getElementById('coupon-code');
+            const applyCouponButton = document.getElementById('apply-coupon-button');
+            const couponMessageElement = document.getElementById('coupon-message');
+            const payNowButton = document.getElementById('pay-now-button');
+            const previousButton = document.getElementById('previous-button'); // Get the previous button
+
+
+            // State variable to track if the healthy menu is active
+            let isHealthyMenuActive = false;
+
+            // Array to store items in the cart
+            // Each item will be an object: { name: 'Item Name', price: 10.99, quantity: 1 }
+            let cart = [];
+
+            // Simulate first order status using localStorage
+            // 'true' means it's potentially the first order, 'false' means an order has been placed
+            let isFirstOrder = localStorage.getItem('isFirstOrder');
+            if (isFirstOrder === null) {
+                // If not set, assume it's the first visit
+                isFirstOrder = 'true';
+                localStorage.setItem('isFirstOrder', 'true');
+            } else {
+                isFirstOrder = localStorage.getItem('isFirstOrder');
+            }
+
+            // Variable to store the current total (before discount)
+            let currentTotal = 0;
+
+
+            // Function to update the cart count badge (total quantity)
+            function updateCartCount() {
+                const totalQuantity = cart.reduce((sum, item) => sum + (item ? item.quantity : 0), 0); // Handle potential undefined items
+                cartCountBadge.textContent = totalQuantity;
+                if (totalQuantity > 0) {
+                    cartCountBadge.classList.remove('hidden');
+                } else {
+                    cartCountBadge.classList.add('hidden');
+                }
+            }
+
+             // Function to render items in the cart modal and calculate total
+            function renderCartItems() {
+                cartItemsList.innerHTML = ''; // Clear the current list
+                currentTotal = 0; // Reset total before recalculating
+
+                if (cart.length === 0) {
+                    cartItemsList.innerHTML = '<p class="text-gray-600">Your cart is empty.</p>';
+                     // Hide checkout button if cart is empty
+                    proceedToCheckoutButton.style.display = 'none';
+                } else {
+                    cart.forEach(item => {
+                        // Only render items that are still in the cart (quantity > 0)
+                        if (item && item.quantity > 0) {
+                            const cartItemElement = document.createElement('div');
+                            cartItemElement.classList.add('cart-item');
+                            cartItemElement.innerHTML = `
+                                <div class="cart-item-info">
+                                    <span>${item.name}</span>
+                                    <span>₹${item.price.toFixed(2)} x ${item.quantity}</span>
+                                </div>
+                                <span>₹${(item.price * item.quantity).toFixed(2)}</span>
+                            `;
+                            cartItemsList.appendChild(cartItemElement);
+                            currentTotal += item.price * item.quantity;
+                        }
+                    });
+                     // Show checkout button if cart is not empty
+                    proceedToCheckoutButton.style.display = 'block';
+                }
+
+                cartTotalElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+                 // When cart is rendered, reset coupon message and input
+                 couponCodeInput.value = '';
+                 couponMessageElement.textContent = '';
+                 couponMessageElement.classList.remove('success', 'error');
+                 // Update payment summary with the initial total (before coupon)
+                 paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+            }
+
+
+            // Function to update the UI of a specific menu item based on its cart status
+            function updateMenuItemUI(itemName) {
+                // Find the menu item element by its name (requires iterating or adding data attributes)
+                // To update UI across all sections (useful when switching menus), iterate all menu items
+                const menuItems = document.querySelectorAll('.menu-item'); // Select all menu items
+                menuItems.forEach(menuItem => {
+                    const itemTitleElement = menuItem.querySelector('h3, h4');
+                    if (itemTitleElement && itemTitleElement.textContent === itemName) {
+                        const addToCartButton = menuItem.querySelector('.add-to-cart-button');
+                        const quantityControls = menuItem.querySelector('.menu-item-quantity-controls');
+                        const quantityDisplay = menuItem.querySelector('.item-quantity');
+
+                        const itemInCart = cart.find(item => item && item.name === itemName); // Check for item and its name
+
+                        if (itemInCart && itemInCart.quantity > 0) {
+                            // Item is in cart, show quantity controls
+                            if (addToCartButton) addToCartButton.style.display = 'none';
+                            if (quantityControls) quantityControls.style.display = 'flex';
+                            if (quantityDisplay) quantityDisplay.textContent = itemInCart.quantity;
+                        } else {
+                            // Item is not in cart or quantity is 0, show Add to Cart button
+                            if (addToCartButton) addToCartButton.style.display = 'block';
+                            if (quantityControls) quantityControls.style.display = 'none';
+                            // Optional: Reset quantity display to 1 when item is removed
+                            if (quantityDisplay) quantityDisplay.textContent = '1';
+                        }
+                    }
+                });
+            }
+
+
+            // Event Delegation for clicks on menu items
+            mainContent.addEventListener('click', (event) => {
+                const target = event.target;
+
+                // Handle Add to Cart button click
+                if (target.classList.contains('add-to-cart-button')) {
+                    const menuItem = target.closest('.menu-item');
+                    if (menuItem) {
+                        const itemName = menuItem.querySelector('h3, h4').textContent;
+                        const itemPriceText = menuItem.querySelector('.menu-item-price').textContent;
+                        // Remove '₹' and convert to a number
+                        const itemPrice = parseFloat(itemPriceText.replace('₹', ''));
+
+                        // Check if item is already in cart
+                        const existingItem = cart.find(item => item && item.name === itemName); // Check for item and its name
+
+                        if (existingItem) {
+                            // If item exists, increase quantity
+                            existingItem.quantity++;
+                        } else {
+                            // If item does not exist, add it with quantity 1
+                            cart.push({ name: itemName, price: itemPrice, quantity: 1 });
+                        }
+
+                        updateMenuItemUI(itemName); // Update the UI of the clicked menu item
+                        updateCartCount(); // Update the badge
+                        renderCartItems(); // Update the cart modal display
+                    }
+                }
+
+                // Handle Decrease Quantity button click
+                if (target.classList.contains('decrease-quantity')) {
+                     const menuItem = target.closest('.menu-item');
+                     if (menuItem) {
+                         const itemName = menuItem.querySelector('h3, h4').textContent;
+                         const itemInCartIndex = cart.findIndex(item => item && item.name === itemName); // Find index
+
+                         if (itemInCartIndex !== -1) {
+                             cart[itemInCartIndex].quantity--;
+
+                             if (cart[itemInCartIndex].quantity <= 0) {
+                                 // Remove item if quantity is 0 or less
+                                 cart.splice(itemInCartIndex, 1);
+                             }
+                             updateMenuItemUI(itemName); // Update the UI of the menu item
+                             updateCartCount(); // Update the badge
+                             renderCartItems(); // Update the cart modal display
+                         }
+                     }
+                }
+
+                // Handle Increase Quantity button click
+                if (target.classList.contains('increase-quantity')) {
+                     const menuItem = target.closest('.menu-item');
+                     if (menuItem) {
+                         const itemName = menuItem.querySelector('h3, h4').textContent;
+                          const itemInCart = cart.find(item => item && item.name === itemName); // Find item
+
+                         if (itemInCart) {
+                             itemInCart.quantity++;
+                             updateMenuItemUI(itemName); // Update the UI of the menu item
+                             updateCartCount(); // Update the badge
+                             renderCartItems(); // Update the cart modal display
+                         }
+                         // After updating quantity, re-render cart to update total and potentially checkout button visibility
+                         renderCartItems();
+                     }
+                }
+            });
+
+            // Function to filter menu items based on search term
+            function filterMenuItems() {
+                const searchTerm = searchBar.value.toLowerCase(); // Get search term and convert to lowercase
+                 // When searching, we want to filter across *all* menu items, regardless of the currently active section
+                const allMenuItems = document.querySelectorAll('.menu-item');
+
+                allMenuItems.forEach(menuItem => {
+                    const itemName = menuItem.querySelector('h3, h4').textContent.toLowerCase();
+                    const itemDescription = menuItem.querySelector('p:not(.menu-item-price)').textContent.toLowerCase(); // Get description, exclude price
+
+                    // Check if item name or description includes the search term
+                    if (searchTerm === '' || itemName.includes(searchTerm) || itemDescription.includes(searchTerm)) {
+                        // If search term is empty OR item matches, determine if it should be shown based on active menu
+                        const parentSection = menuItem.closest('.menu-section');
+                        if (parentSection && parentSection.style.display === 'block') {
+                             menuItem.style.display = 'flex'; // Show the item if its section is visible and it matches
+                        } else {
+                             menuItem.style.display = 'none'; // Hide if its section is not visible or no search term and section is hidden
+                        }
+                    } else {
+                        menuItem.style.display = 'none'; // Hide if it doesn't match the search term
+                    }
+                });
+            }
+
+
+            // Add event listener to the search bar for input changes
+            searchBar.addEventListener('input', filterMenuItems);
+
+
+            // Function to hide all menu sections
+            function hideAllMenus() {
+                const menuSections = document.querySelectorAll('.menu-section');
+                menuSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+            }
+
+            // Function to display the appropriate menu based on time
+            function displayMenuBasedOnTime() {
+                 // Only display time-based menu if healthy menu is NOT active
+                if (isHealthyMenuActive) {
+                    return;
+                }
+
+                const now = new Date();
+                const hour = now.getHours();
+
+                hideAllMenus(); // Hide all menus first
+
+                // Determine which menu to show based on the hour
+                const menuMapping = {
+                    breakfast: { start: 7, end: 11, element: document.getElementById('breakfast-menu') },
+                    lunch: { start: 12, end: 16, element: document.getElementById('lunch-menu') },
+                    snack: { start: 16, end: 18, element: document.getElementById('snack-menu') },
+                    dinner: { start: 19, end: 22, element: document.getElementById('dinner-menu') }
+                };
+
+                let activeMenuElement = null;
+
+                for (const key in menuMapping) {
+                    if (hour >= menuMapping[key].start && hour < menuMapping[key].end) {
+                        activeMenuElement = menuMapping[key].element;
+                        break;
+                    }
+                }
+
+                if (activeMenuElement) {
+                    activeMenuElement.style.display = 'block';
+                    // After displaying the correct time-based menu, apply any active search filter
+                    filterMenuItems();
+                } else {
+                    console.log("No specific menu available at this time.");
+                    // Optional: Display a default message or menu
+                }
+            }
+
+
+            // Function to toggle the healthy food menu visibility
+            function toggleHealthyFoodMenu() {
+                isHealthyMenuActive = !isHealthyMenuActive; // Toggle the state
+
+                hideAllMenus(); // Hide all other time-based menus
+
+                if (isHealthyMenuActive) {
+                     healthyFoodMenu.style.display = 'block';
+                     searchBar.value = ''; // Clear search bar when activating healthy menu
+                     healthyMenuToggle.classList.add('selected'); // Add selected class
+                } else {
+                    // If healthy menu is deactivated, revert to time-based display
+                    displayMenuBasedOnTime();
+                    healthyMenuToggle.classList.remove('selected'); // Remove selected class
+                }
+
+                 // Apply search filter after changing the visible menu (will show all if search bar is cleared)
+                 filterMenuItems();
+            }
+
+            // Event listener for the Healthy Food toggle
+            healthyMenuToggle.addEventListener('click', toggleHealthyFoodMenu);
+
+            // Event listeners for the Cart Modal
+            cartIcon.addEventListener('click', () => {
+                renderCartItems(); // Render items when opening the modal
+                cartModalOverlay.style.display = 'flex'; // Show the modal
+            });
+
+            cartModalClose.addEventListener('click', () => {
+                cartModalOverlay.style.display = 'none'; // Hide the modal
+            });
+
+            // Close cart modal if clicking outside the modal content
+            cartModalOverlay.addEventListener('click', (event) => {
+                if (event.target === cartModalOverlay) {
+                    cartModalOverlay.style.display = 'none';
+                }
+            });
+
+            // Event listeners for the Login/Signup Modal
+            loginSignupLink.addEventListener('click', () => {
+                authModalOverlay.style.display = 'flex'; // Show the auth modal
+                 // Ensure login form is shown by default when opening
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+            });
+
+            authModalClose.addEventListener('click', () => {
+                authModalOverlay.style.display = 'none'; // Hide the auth modal
+            });
+
+            // Close auth modal if clicking outside the modal content
+            authModalOverlay.addEventListener('click', (event) => {
+                if (event.target === authModalOverlay) {
+                    authModalOverlay.style.display = 'none';
+                }
+            });
+
+            // Event listeners to switch between Login and Signup forms
+            showSignupLink.addEventListener('click', () => {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+            });
+
+            showLoginLink.addEventListener('click', () => {
+                signupForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            });
+
+            // Event listener for the "Proceed to Checkout" button
+            proceedToCheckoutButton.addEventListener('click', () => {
+                // Hide the cart modal
+                cartModalOverlay.style.display = 'none';
+
+                // Update the payment summary in the payment modal with the current total
+                paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+
+                // Show the payment modal
+                paymentModalOverlay.style.display = 'flex';
+            });
+
+            // Event listener for the "Apply Coupon" button
+            applyCouponButton.addEventListener('click', () => {
+                const enteredCode = couponCodeInput.value.trim().toUpperCase(); // Get code and convert to uppercase
+                const requiredCode = "SMOIMI1";
+                const discountPercentage = 0.25; // 25%
+
+                // Clear previous message
+                couponMessageElement.textContent = '';
+                couponMessageElement.classList.remove('success', 'error');
+
+                if (enteredCode === requiredCode) {
+                    if (isFirstOrder === 'true') {
+                        // Apply discount
+                        const discountedTotal = currentTotal * (1 - discountPercentage);
+                        paymentSummaryElement.textContent = `Subtotal: ₹${currentTotal.toFixed(2)} | Discount (25%): -₹${(currentTotal * discountPercentage).toFixed(2)} | Total: ₹${discountedTotal.toFixed(2)}`;
+                        couponMessageElement.textContent = 'Coupon applied successfully!';
+                        couponMessageElement.classList.add('success');
+                        // For demo, we won't persist the discounted total, but in a real app, you would.
+                        // Also, mark this as not the first order after successful application (or after placing the order)
+                    } else {
+                        couponMessageElement.textContent = 'Coupon is only valid for your first order.';
+                        couponMessageElement.classList.add('error');
+                         // Revert to original total if they try to apply it again
+                         paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+                    }
+                } else {
+                    couponMessageElement.textContent = 'Invalid coupon code.';
+                    couponMessageElement.classList.add('error');
+                     // Revert to original total if invalid code
+                     paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+                }
+            });
+
+             // Event listener for the "Pay Now" button (for demo purposes)
+            payNowButton.addEventListener('click', () => {
+                // In a real application, you would handle payment processing here.
+                // For this demo, we'll just simulate order completion and reset the cart.
+
+                // Check if coupon was applied and it was the first order, then mark as not first order
+                const appliedCouponCode = couponCodeInput.value.trim().toUpperCase();
+                if (appliedCouponCode === "SMOIMI1" && isFirstOrder === 'true') {
+                     localStorage.setItem('isFirstOrder', 'false');
+                     isFirstOrder = 'false'; // Update the variable in memory
+                }
+
+
+                alert('Order placed successfully!'); // Simple confirmation
+
+                // Reset the cart and close the modal
+                cart = [];
+                updateCartCount();
+                renderCartItems(); // This will also hide the checkout button and reset payment summary
+                paymentModalOverlay.style.display = 'none';
+
+                // Optional: Redirect to a confirmation page or show a success message on the main page
+            });
+
+            // Event listener for the "Previous" button in the payment modal
+            previousButton.addEventListener('click', () => {
+                // Hide the payment modal
+                paymentModalOverlay.style.display = 'none';
+                // Show the cart modal
+                cartModalOverlay.style.display = 'flex';
+                 // Ensure cart items are rendered correctly when returning
+                 renderCartItems();
+            });
+
+
+            // Event listeners for the Payment Modal
+            paymentModalClose.addEventListener('click', () => {
+                paymentModalOverlay.style.display = 'none'; // Hide the payment modal
+                 // Reset coupon input and message when closing
+                 couponCodeInput.value = '';
+                 couponMessageElement.textContent = '';
+                 couponMessageElement.classList.remove('success', 'error');
+                 // Revert payment summary to the original total (in case a coupon was partially applied or failed)
+                 paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+            });
+
+            // Close payment modal if clicking outside the modal content
+            paymentModalOverlay.addEventListener('click', (event) => {
+                if (event.target === paymentModalOverlay) {
+                    paymentModalOverlay.style.display = 'none';
+                     // Reset coupon input and message when closing
+                     couponCodeInput.value = '';
+                     couponMessageElement.textContent = '';
+                     couponMessageElement.classList.remove('success', 'error');
+                     // Revert payment summary to the original total
+                     paymentSummaryElement.textContent = `Total: ₹${currentTotal.toFixed(2)}`;
+                }
+            });
+
+
+            // --- Initialization ---
+
+            // Initial display: Check if healthy menu should be active (e.g., based on a saved state or default)
+            // For now, default to time-based display on load
+            displayMenuBasedOnTime();
+
+
+            // Initial cart count display
+            updateCartCount();
+
+            // Optional: You could set an interval to update the menu display periodically
+            // setInterval(displayMenuBasedOnTime, 60000); // Update every minute
+        });
+    </script>
+
+</body>
+</html>
